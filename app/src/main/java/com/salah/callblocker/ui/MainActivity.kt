@@ -13,8 +13,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -29,6 +31,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -39,8 +42,14 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.salah.callblocker.ui.components.BentoCard
 import com.salah.callblocker.ui.components.BentoVariant
+import com.salah.callblocker.ui.components.CircleIconButton
 import com.salah.callblocker.ui.components.GlassBackdrop
 import com.salah.callblocker.ui.components.PillButton
+import com.salah.callblocker.ui.icons.AppIcons
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
 import com.salah.callblocker.ui.dashboard.DashboardScreen
 import com.salah.callblocker.ui.log.LogScreen
 import com.salah.callblocker.ui.rules.RulesScreen
@@ -54,6 +63,8 @@ private const val DASHBOARD = "dashboard"
 private const val RULES = "rules"
 private const val LOG = "log"
 private const val SETTINGS = "settings"
+
+private val TOP_BAR_HEIGHT = 64.dp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,6 +90,7 @@ private fun CallBlockerApp() {
     val scope = rememberCoroutineScope()
 
     val settingsVm: SettingsViewModel = viewModel()
+    val hazeState = remember { HazeState() }
 
     var screen by remember { mutableStateOf(DASHBOARD) }
 
@@ -175,27 +187,44 @@ private fun CallBlockerApp() {
                     modifier = Modifier.fillMaxSize(),
                 )
                 else -> {
-                    if (!roleHeld) {
-                        RoleBanner(
-                            onRequestRole = {
-                                val roleManager = context.getSystemService(RoleManager::class.java)
-                                if (roleManager != null) {
-                                    val intent = roleManager.createRequestRoleIntent(
-                                        RoleManager.ROLE_CALL_SCREENING,
-                                    )
-                                    roleLauncher.launch(intent)
-                                }
-                            },
-                        )
-                    }
-                    DashboardScreen(
-                        onOpenLog = { screen = LOG },
-                        onOpenRules = { screen = RULES },
-                        onOpenSettings = { screen = SETTINGS },
+                    Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth(),
-                    )
+                    ) {
+                        DashboardScreen(
+                            onOpenLog = { screen = LOG },
+                            onOpenRules = { screen = RULES },
+                            contentTopPadding = TOP_BAR_HEIGHT + 8.dp,
+                            topBanner = if (!roleHeld) {
+                                {
+                                    RoleBanner(
+                                        onRequestRole = {
+                                            val roleManager =
+                                                context.getSystemService(RoleManager::class.java)
+                                            if (roleManager != null) {
+                                                val intent = roleManager.createRequestRoleIntent(
+                                                    RoleManager.ROLE_CALL_SCREENING,
+                                                )
+                                                roleLauncher.launch(intent)
+                                            }
+                                        },
+                                    )
+                                }
+                            } else {
+                                null
+                            },
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .hazeSource(hazeState),
+                        )
+                        DashboardTopBar(
+                            onOpenRules = { screen = RULES },
+                            onOpenSettings = { screen = SETTINGS },
+                            hazeState = hazeState,
+                            modifier = Modifier.align(Alignment.TopCenter),
+                        )
+                    }
                 }
             }
         }
@@ -203,12 +232,49 @@ private fun CallBlockerApp() {
 }
 
 @Composable
-private fun RoleBanner(onRequestRole: () -> Unit) {
+private fun DashboardTopBar(
+    onOpenRules: () -> Unit,
+    onOpenSettings: () -> Unit,
+    hazeState: HazeState,
+    modifier: Modifier = Modifier,
+) {
+    val scheme = MaterialTheme.colorScheme
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(TOP_BAR_HEIGHT)
+            .hazeEffect(state = hazeState) {
+                blurRadius = 24.dp
+                backgroundColor = scheme.background
+                tints = listOf(HazeTint(scheme.background.copy(alpha = 0.55f)))
+            }
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CircleIconButton(
+            icon = AppIcons.shield,
+            contentDescription = "Rules",
+            onClick = onOpenRules,
+            outlined = true,
+        )
+        CircleIconButton(
+            icon = AppIcons.settings,
+            contentDescription = "Settings",
+            onClick = onOpenSettings,
+            outlined = true,
+        )
+    }
+}
+
+@Composable
+private fun RoleBanner(
+    onRequestRole: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val accents = LocalCallBlockerColors.current
     BentoCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+        modifier = modifier.fillMaxWidth(),
         variant = BentoVariant.Accent,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

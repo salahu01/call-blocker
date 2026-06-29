@@ -1,0 +1,31 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="lime" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#EAFF8C"/>
+      <stop offset="0.5" stop-color="#C6FF00"/>
+      <stop offset="1" stop-color="#9BE000"/>
+    </linearGradient>
+    <linearGradient id="white" x1="0.2" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E3E1FA"/>
+    </linearGradient>
+    <filter id="ds" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="14" stdDev="20" flood-color="#10063A" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#ds)">
+    <!-- broadcast / incoming-call waves, upper-right -->
+    <g fill="none" stroke-linecap="round" transform="translate(560 372)">
+      <path d="M0 96 A 96 96 0 0 1 96 0"  stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="34"/>
+      <path d="M0 176 A 176 176 0 0 1 176 0" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="34"/>
+    </g>
+
+    <!-- hero prohibition: ring + diagonal block stroke = blocked -->
+    <circle cx="470" cy="560" r="172" fill="none" stroke="url(#white)" stroke-width="72"/>
+    <g transform="rotate(-45 470 560)">
+      <rect x="430" y="290" width="80" height="540" rx="40" fill="#3A2A9E"/>
+      <rect x="446" y="306" width="48" height="508" rx="24" fill="url(#lime)"/>
+    </g>
+  </g>
+</svg>

@@ -112,32 +112,83 @@ fun SubMetric(
     }
 }
 
-/** Decorative dotted scatter ring (reference radar viz in the bento cards). */
+/**
+ * "Most Blocked" abstract viz — a frequency histogram. Bars rise to a peak
+ * (the repeat offender) which is highlighted and capped with a small block ring;
+ * the rest are muted. [base] = muted bar color, [highlight] = peak color.
+ */
 @Composable
-fun ScatterRing(highlight: Color, modifier: Modifier = Modifier, onAccent: Boolean = false) {
-    val dotColor = if (onAccent) Color.Black.copy(alpha = 0.30f) else Color.White.copy(alpha = 0.45f)
-    val ringColor = if (onAccent) Color.Black.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.18f)
+fun MostBlockedViz(base: Color, highlight: Color, modifier: Modifier = Modifier) {
     Canvas(modifier) {
-        val r = size.minDimension / 2f * 0.78f
-        val c = Offset(size.width / 2f, size.height / 2f)
-        drawCircle(
-            color = ringColor,
-            radius = r,
-            center = c,
-            style = Stroke(
-                width = 1.5.dp.toPx(),
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(5f, 9f)),
-            ),
-        )
-        val pts = listOf(
-            Offset(-0.35f, -0.25f), Offset(0.28f, -0.4f), Offset(0.12f, 0.34f),
-            Offset(-0.18f, 0.18f), Offset(0.4f, 0.12f), Offset(-0.05f, -0.05f),
-        )
-        pts.forEach { p ->
-            drawCircle(dotColor, 3.dp.toPx(), Offset(c.x + p.x * r * 1.25f, c.y + p.y * r * 1.25f))
+        val heights = floatArrayOf(0.40f, 0.62f, 0.82f, 1.0f, 0.55f, 0.34f, 0.48f)
+        val peak = 3
+        val n = heights.size
+        val gap = size.width * 0.05f
+        val barW = (size.width - gap * (n - 1)) / n
+        val maxH = size.height * 0.86f
+        val baseY = size.height
+        val radius = CornerRadius(barW / 2f, barW / 2f)
+        heights.forEachIndexed { i, frac ->
+            val h = maxH * frac
+            val x = i * (barW + gap)
+            drawRoundRect(
+                color = if (i == peak) highlight else base.copy(alpha = 0.35f),
+                topLeft = Offset(x, baseY - h),
+                size = Size(barW, h),
+                cornerRadius = radius,
+            )
         }
-        drawCircle(highlight, 5.5.dp.toPx(), c)
-        drawCircle(Color.White, 2.dp.toPx(), c)
+        // block ring crowning the peak bar
+        val px = peak * (barW + gap) + barW / 2f
+        val py = baseY - maxH - 2.dp.toPx()
+        val rr = barW * 0.55f
+        drawCircle(highlight, rr, Offset(px, py), style = Stroke(width = 2.dp.toPx()))
+        val d = rr * 0.7071f
+        drawLine(
+            highlight,
+            Offset(px - d, py - d),
+            Offset(px + d, py + d),
+            strokeWidth = 2.dp.toPx(),
+        )
+    }
+}
+
+/**
+ * "Active Rules" abstract viz — a stack of rule rows. Each row is a rounded
+ * capsule with a leading status dot; the top (active) row is highlighted, the
+ * rest muted. [base] = muted row color, [highlight] = active row color.
+ */
+@Composable
+fun ActiveRulesViz(base: Color, highlight: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier) {
+        val widths = floatArrayOf(1.0f, 0.78f, 0.6f)
+        val activeIdx = 0
+        val n = widths.size
+        val rowH = size.height * 0.20f
+        val gap = (size.height - rowH * n) / (n - 1) * 0.7f
+        val dotR = rowH * 0.42f
+        val dotCx = dotR
+        widths.forEachIndexed { i, frac ->
+            val active = i == activeIdx
+            val color = if (active) highlight else base.copy(alpha = 0.30f)
+            val y = i * (rowH + gap)
+            val cy = y + rowH / 2f
+            // status dot
+            if (active) {
+                drawCircle(color, dotR, Offset(dotCx, cy))
+            } else {
+                drawCircle(color, dotR, Offset(dotCx, cy), style = Stroke(width = 1.5.dp.toPx()))
+            }
+            // rule capsule
+            val barX = dotR * 2f + size.width * 0.05f
+            val barMax = size.width - barX
+            drawRoundRect(
+                color = if (active) color else base.copy(alpha = 0.22f),
+                topLeft = Offset(barX, y),
+                size = Size(barMax * frac, rowH),
+                cornerRadius = CornerRadius(rowH / 2f, rowH / 2f),
+            )
+        }
     }
 }
 

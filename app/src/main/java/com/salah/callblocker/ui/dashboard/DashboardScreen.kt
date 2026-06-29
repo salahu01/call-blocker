@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -46,38 +48,30 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = viewModel(),
     onOpenLog: () -> Unit = {},
     onOpenRules: () -> Unit = {},
-    onOpenSettings: () -> Unit = {},
+    contentTopPadding: Dp = 8.dp,
+    topBanner: (@Composable () -> Unit)? = null,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val timeFmt = remember { SimpleDateFormat("MMM d · h:mm a", Locale.getDefault()) }
 
-    LazyColumn(
-        modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                CircleIconButton(
-                    icon = AppIcons.shield,
-                    contentDescription = "Rules",
-                    onClick = onOpenRules,
-                    outlined = true,
-                )
-                CircleIconButton(
-                    icon = AppIcons.settings,
-                    contentDescription = "Settings",
-                    onClick = onOpenSettings,
-                    outlined = true,
-                )
+    Column(modifier = modifier.fillMaxWidth()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = contentTopPadding,
+                bottom = 24.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            if (topBanner != null) {
+                item { topBanner() }
             }
-        }
 
-        item { HeroCard(state, onOpenLog) }
+            item { HeroCard(state, onOpenLog) }
 
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -120,6 +114,7 @@ fun DashboardScreen(
             items(state.recent, key = { it.id }) { call ->
                 RecentRow(call = call, formatted = timeFmt.format(Date(call.timestamp)))
             }
+        }
         }
     }
 }
@@ -247,9 +242,9 @@ private fun MostBlockedCard(state: DashboardUiState, modifier: Modifier = Modifi
             )
         }
         Spacer(Modifier.height(8.dp))
-        ScatterRing(
+        MostBlockedViz(
+            base = accents.onAccent,
             highlight = accents.onAccent,
-            onAccent = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(86.dp),
@@ -266,16 +261,30 @@ private fun RulesCard(state: DashboardUiState, onOpenRules: () -> Unit, modifier
         onClick = onOpenRules,
         contentPadding = 18,
     ) {
-        Text(
-            text = "Active Rules",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Text(
-            text = "of ${state.totalRules}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Active Rules",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = "of ${state.totalRules}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Icon(
+                imageVector = AppIcons.arrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp),
+            )
+        }
         Spacer(Modifier.height(10.dp))
         Text(
             text = state.activeRules.toString(),
@@ -283,9 +292,9 @@ private fun RulesCard(state: DashboardUiState, onOpenRules: () -> Unit, modifier
             color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(Modifier.height(8.dp))
-        ScatterRing(
+        ActiveRulesViz(
+            base = MaterialTheme.colorScheme.onSurface,
             highlight = accents.accentFill,
-            onAccent = false,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(86.dp),

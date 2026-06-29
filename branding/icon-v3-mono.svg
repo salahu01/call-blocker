@@ -1,0 +1,5 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+<path d="M322 248 L702 248 Q744 248 744 290 L744 474
+ C744 624 662 724 512 802 C362 724 280 624 280 474 L280 290
+ Q280 248 322 248 Z" fill="none" stroke="#FFFFFF" stroke-width="46"/>
+<g transform="translate(512 512) scale(1.05)" fill="#FFFFFF"><rect x="-26" y="-104" width="52" height="208" rx="26" transform="rotate(0)"/><rect x="-26" y="-104" width="52" height="208" rx="26" transform="rotate(60)"/><rect x="-26" y="-104" width="52" height="208" rx="26" transform="rotate(120)"/><circle r="30"/></g></svg>

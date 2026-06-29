@@ -122,6 +122,13 @@ object AppIcons {
         }
     }
 
+    val close: ImageVector by lazy {
+        lineIcon("AppClose") {
+            moveTo(6f, 6f); lineTo(18f, 18f)
+            moveTo(18f, 6f); lineTo(6f, 18f)
+        }
+    }
+
     val trash: ImageVector by lazy {
         lineIcon("AppTrash") {
             // lid

@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,6 +36,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
@@ -94,10 +96,17 @@ fun LogScreen(
 
     var filter by remember { mutableStateOf(ActionFilter.ALL) }
     var newestFirst by remember { mutableStateOf(true) }
+    var query by remember { mutableStateOf("") }
 
-    val sections = remember(calls, filter, newestFirst) {
+    val sections = remember(calls, filter, newestFirst, query) {
+        val q = query.trim()
         groupByDay(
-            calls = calls.filter { filter.match == null || it.action == filter.match },
+            calls = calls.filter { call ->
+                (filter.match == null || call.action == filter.match) &&
+                    (q.isBlank() ||
+                        call.number.contains(q, ignoreCase = true) ||
+                        call.matchedPattern.contains(q, ignoreCase = true))
+            },
             newestFirst = newestFirst,
         )
     }
@@ -121,6 +130,11 @@ fun LogScreen(
         if (calls.isEmpty()) {
             EmptyLog(Modifier.fillMaxSize())
         } else {
+            SearchField(
+                query = query,
+                onQueryChange = { query = it },
+            )
+
             FilterSortBar(
                 filter = filter,
                 onFilter = { filter = it },
@@ -134,7 +148,11 @@ fun LogScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = "No ${filter.label.lowercase()} calls.",
+                        text = if (query.isNotBlank()) {
+                            "No calls match \"${query.trim()}\"."
+                        } else {
+                            "No ${filter.label.lowercase()} calls."
+                        },
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -160,6 +178,63 @@ fun LogScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SearchField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+) {
+    val accents = LocalCallBlockerColors.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = AppIcons.search,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp),
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 10.dp),
+        ) {
+            if (query.isEmpty()) {
+                Text(
+                    text = "Search number or pattern",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                ),
+                cursorBrush = SolidColor(accents.accentFill),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        if (query.isNotEmpty()) {
+            Icon(
+                imageVector = AppIcons.close,
+                contentDescription = "Clear search",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .size(18.dp)
+                    .clickable { onQueryChange("") },
+            )
         }
     }
 }

@@ -11,3 +11,10 @@ build/
 local.properties
 
 .kotlin/
+
+# Signing — NEVER commit
+key.properties
+keystore.properties
+*.jks
+*.keystore
+

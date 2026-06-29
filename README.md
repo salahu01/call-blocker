@@ -64,6 +64,7 @@ The name comes from **glob** patterns: you describe the numbers you want gone, a
 | `READ_CONTACTS` | Allow calls from known contacts _(optional)_ |
 | `POST_NOTIFICATIONS` | Notify when a call is blocked |
 
+<!--
 ## Development setup
 
 1. Install the [Android SDK](https://developer.android.com/studio) and JDK 17.
@@ -85,6 +86,7 @@ The name comes from **glob** patterns: you describe the numbers you want gone, a
    keyPassword=…
    ```
    then run `./gradlew assembleRelease`. Without it, `assembleRelease` produces an unsigned APK.
+-->
 
 **Tech:** Kotlin · Jetpack Compose · Room (rule & log persistence) · `CallScreeningService` · `minSdk 29` / `targetSdk 35`.
 

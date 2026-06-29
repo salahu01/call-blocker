@@ -16,6 +16,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rebranded **Call Blocker → Globber**.
 - Renamed application package `com.fegno.callblocker` → `com.salah.callblocker`.
 
+## [1.0.1] - 2026-06-29
+
+### Added
+- Release signing config sourced from a gitignored `key.properties`; the
+  release APK is now signed (APK Signature Scheme v2).
+- README redesign with neon-lime banner and brand assets.
+
+### Changed
+- Bumped `versionCode` 1 → 2, `versionName` 1.0 → 1.0.1.
+
 ## [1.0.0] - 2026-06-29
 
 ### Added
@@ -25,5 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Block log of screened calls.
 - Dark neon-lime bento UI with a custom icon set.
 
-[Unreleased]: https://github.com/salahu01/call-blocker/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/salahu01/call-blocker/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/salahu01/call-blocker/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/salahu01/call-blocker/releases/tag/v1.0.0

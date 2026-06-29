@@ -1,15 +1,14 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="base" x1="0" y1="0" x2="0.3" y2="1">
-      <stop offset="0" stop-color="#222a18"/>
-      <stop offset="1" stop-color="#090b06"/>
+    <linearGradient id="graphite" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2A2F3A"/>
+      <stop offset="1" stop-color="#0E1116"/>
     </linearGradient>
+    <radialGradient id="glow" cx="0.32" cy="0.2" r="0.7">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="0.6" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <rect width="1024" height="1024" fill="url(#base)"/>
-  <!-- vivid lime blobs; magick blurs this whole layer afterwards -->
-  <circle cx="300" cy="240" r="250" fill="#C6FF00" opacity="0.85"/>
-  <circle cx="800" cy="800" r="300" fill="#6FD400" opacity="0.8"/>
-  <circle cx="790" cy="250" r="170" fill="#EAFF8C" opacity="0.6"/>
-  <circle cx="180" cy="620" r="150" fill="#9BE000" opacity="0.5"/>
-  <circle cx="560" cy="520" r="120" fill="#C6FF00" opacity="0.35"/>
+  <rect width="1024" height="1024" fill="url(#graphite)"/>
+  <rect width="1024" height="1024" fill="url(#glow)"/>
 </svg>

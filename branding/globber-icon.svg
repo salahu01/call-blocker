@@ -1,91 +1,37 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- squircle clip -->
-    <clipPath id="squircle">
-      <path d="M512 32
-               C 168 32, 32 168, 32 512
-               C 32 856, 168 992, 512 992
-               C 856 992, 992 856, 992 512
-               C 992 168, 856 32, 512 32 Z"/>
-    </clipPath>
-
-    <!-- base dark gradient -->
-    <linearGradient id="base" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#1b2016"/>
-      <stop offset="1" stop-color="#0a0c07"/>
+    <linearGradient id="graphite" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2A2F3A"/>
+      <stop offset="1" stop-color="#0E1116"/>
     </linearGradient>
-
-    <!-- lime sheen on glyph -->
     <linearGradient id="lime" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#E6FF7A"/>
+      <stop offset="0" stop-color="#EAFF8C"/>
       <stop offset="0.5" stop-color="#C6FF00"/>
       <stop offset="1" stop-color="#9BE000"/>
     </linearGradient>
-
-    <linearGradient id="white" x1="0" y1="0" x2="0.4" y2="1">
-      <stop offset="0" stop-color="#ffffff"/>
-      <stop offset="1" stop-color="#E8EFE0"/>
-    </linearGradient>
-
-    <!-- heavy blur for background glow blobs -->
-    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDev="90"/>
-    </filter>
-
-    <!-- soft drop shadow for glyph -->
-    <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%">
-      <feDropShadow dx="0" dy="18" stdDev="26" flood-color="#000000" flood-opacity="0.45"/>
-    </filter>
-
-    <radialGradient id="topglow" cx="0.5" cy="0.18" r="0.9">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
-      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>
+    <radialGradient id="glow" cx="0.32" cy="0.2" r="0.7">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="0.6" stop-color="#FFFFFF" stop-opacity="0"/>
     </radialGradient>
+    <filter id="ds" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="16" stdDev="22" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
   </defs>
 
-  <g clip-path="url(#squircle)">
-    <!-- base -->
-    <rect width="1024" height="1024" fill="url(#base)"/>
+  <!-- graphite squircle tile -->
+  <rect width="1024" height="1024" rx="232" fill="url(#graphite)"/>
+  <rect width="1024" height="1024" rx="232" fill="url(#glow)"/>
 
-    <!-- blurred neon-lime glow blobs (the blurred background) -->
-    <g filter="url(#blur)">
-      <circle cx="300" cy="250" r="220" fill="#C6FF00" opacity="0.55"/>
-      <circle cx="780" cy="780" r="260" fill="#7BE000" opacity="0.45"/>
-      <circle cx="760" cy="240" r="150" fill="#E6FF7A" opacity="0.35"/>
-    </g>
-
-    <!-- subtle top light -->
-    <rect width="1024" height="1024" fill="url(#topglow)"/>
-
-    <!-- glyph group: phone handset + wildcard asterisk -->
-    <g filter="url(#shadow)">
-      <!-- phone handset (white) -->
-      <path fill="url(#white)" transform="rotate(-8 512 540)"
-            d="M392 372
-               c 22 -22 58 -22 80 0
-               l 46 46 c 20 20 22 52 4 74
-               l -22 27 c -10 12 -9 30 2 41
-               l 84 84 c 11 11 29 12 41 2
-               l 27 -22 c 22 -18 54 -16 74 4
-               l 46 46 c 22 22 22 58 0 80
-               l -34 34 c -28 28 -70 36 -106 20
-               C 540 769 437 666 380 540
-               c -16 -36 -8 -78 20 -106 Z"/>
-
-      <!-- wildcard asterisk badge (lime) = glob pattern matching -->
-      <g transform="translate(672 360)">
-        <circle r="118" fill="#0a0c07"/>
-        <circle r="118" fill="url(#lime)" opacity="0.14"/>
-        <g fill="url(#lime)">
-          <!-- six-arm asterisk -->
-          <g>
-            <rect x="-18" y="-66" width="36" height="132" rx="18"/>
-            <rect x="-18" y="-66" width="36" height="132" rx="18" transform="rotate(60)"/>
-            <rect x="-18" y="-66" width="36" height="132" rx="18" transform="rotate(120)"/>
-          </g>
-          <circle r="20"/>
-        </g>
-      </g>
+  <!-- lime shield + dark wildcard asterisk -->
+  <g filter="url(#ds)">
+    <path d="M322 248 L702 248 Q744 248 744 290 L744 474
+             C744 624 662 724 512 802 C362 724 280 624 280 474 L280 290
+             Q280 248 322 248 Z" fill="url(#lime)"/>
+    <g transform="translate(512 512) scale(1.05)" fill="#11140C">
+      <rect x="-26" y="-104" width="52" height="208" rx="26"/>
+      <rect x="-26" y="-104" width="52" height="208" rx="26" transform="rotate(60)"/>
+      <rect x="-26" y="-104" width="52" height="208" rx="26" transform="rotate(120)"/>
+      <circle r="30"/>
     </g>
   </g>
 </svg>

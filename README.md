@@ -69,19 +69,32 @@ ranges, spoofs prefixes, and burns a new line every call. **Globber blocks the
 
 ---
 
+## 📦 Download
+
+Grab the latest signed APK from the
+[**Releases**](https://github.com/salahu01/call-blocker/releases/latest) page.
+
 ## 🛠 Build
 
 ```bash
 git clone https://github.com/salahu01/call-blocker.git
 cd call-blocker
-./gradlew assembleRelease
+./gradlew assembleDebug    # or assembleRelease
 ```
 
-Output: `app/build/outputs/apk/release/app-release-unsigned.apk`
+Debug output: `app/build/outputs/apk/debug/app-debug.apk`
 
-> The release APK is **unsigned**. Sign with your own keystore before installing:
+> **Signed release builds** read credentials from a gitignored `key.properties`
+> at the repo root:
+> ```properties
+> storeFile=/absolute/path/to/your-keystore.jks
+> storePassword=…
+> keyAlias=…
+> keyPassword=…
+> ```
+> Without it, `assembleRelease` produces an unsigned APK — sign it manually:
 > ```bash
-> apksigner sign --ks <your-keystore> app-release-unsigned.apk
+> apksigner sign --ks <your-keystore> app/build/outputs/apk/release/app-release-unsigned.apk
 > ```
 
 ---

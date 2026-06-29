@@ -17,8 +17,8 @@ participating, you are expected to uphold it.
 ## Building
 
 ```bash
-git clone https://github.com/salahu01/call-blocker.git
-cd call-blocker
+git clone https://github.com/salahu01/Globber.git
+cd Globber
 
 # Debug build (installable, signed with the debug key)
 ./gradlew assembleDebug

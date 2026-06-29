@@ -15,7 +15,7 @@ calls, so we take security seriously.
 
 Instead, please report them privately via one of:
 
-- GitHub's [private vulnerability reporting](https://github.com/salahu01/call-blocker/security/advisories/new)
+- GitHub's [private vulnerability reporting](https://github.com/salahu01/Globber/security/advisories/new)
   (Security → Report a vulnerability)
 - Email: **cvsalahu12@gmail.com**
 

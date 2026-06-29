@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Brand shield, neon lime -->
+    <path
+        android:fillColor="#B6FF3C"
+        android:pathData="M54,26 L74,34 L74,54 C74,68 65,78 54,82 C43,78 34,68 34,54 L34,34 Z" />
+    <!-- Check mark, near-black on lime -->
+    <path
+        android:strokeColor="#0A0C07"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M46,54 L52,60.5 L64,46" />
+</vector>

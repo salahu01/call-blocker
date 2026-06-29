@@ -9,6 +9,9 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,6 +58,7 @@ import com.salah.callblocker.ui.log.LogScreen
 import com.salah.callblocker.ui.rules.RulesScreen
 import com.salah.callblocker.ui.settings.SettingsScreen
 import com.salah.callblocker.ui.settings.SettingsViewModel
+import com.salah.callblocker.ui.splash.SplashScreen
 import com.salah.callblocker.ui.theme.CallBlockerTheme
 import com.salah.callblocker.ui.theme.LocalCallBlockerColors
 import kotlinx.coroutines.launch
@@ -68,6 +72,7 @@ private val TOP_BAR_HEIGHT = 64.dp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -76,7 +81,18 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
-                    CallBlockerApp()
+                    var showSplash by remember { mutableStateOf(true) }
+                    Crossfade(
+                        targetState = showSplash,
+                        animationSpec = tween(400),
+                        label = "splash-to-app",
+                    ) { splash ->
+                        if (splash) {
+                            SplashScreen(onFinished = { showSplash = false })
+                        } else {
+                            CallBlockerApp()
+                        }
+                    }
                 }
             }
         }

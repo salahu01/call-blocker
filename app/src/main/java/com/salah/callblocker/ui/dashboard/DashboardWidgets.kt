@@ -1,5 +1,12 @@
 package com.salah.callblocker.ui.dashboard
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
@@ -18,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,6 +34,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -113,82 +122,142 @@ fun SubMetric(
 }
 
 /**
- * "Most Blocked" abstract viz — a frequency histogram. Bars rise to a peak
- * (the repeat offender) which is highlighted and capped with a small block ring;
- * the rest are muted. [base] = muted bar color, [highlight] = peak color.
+ * "Most Blocked" viz — the repeat offender. A central "no-calls" ban badge
+ * (phone glyph crossed by a slash) with concentric ripple rings pulsing
+ * outward: the number keeps calling, keeps getting blocked. The badge gives a
+ * small recoil pulse each time a fresh ripple is born.
+ * [base] = muted ring color, [highlight] = badge / lead-ripple color.
  */
 @Composable
 fun MostBlockedViz(base: Color, highlight: Color, modifier: Modifier = Modifier) {
+    val t = rememberInfiniteTransition(label = "mostBlocked")
+    val wave by t.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(2400, easing = LinearEasing), RepeatMode.Restart),
+        label = "wave",
+    )
+    val beat by t.animateFloat(
+        initialValue = 0.94f,
+        targetValue = 1.06f,
+        animationSpec = infiniteRepeatable(
+            tween(900, easing = FastOutSlowInEasing),
+            RepeatMode.Reverse,
+        ),
+        label = "beat",
+    )
     Canvas(modifier) {
-        val heights = floatArrayOf(0.40f, 0.62f, 0.82f, 1.0f, 0.55f, 0.34f, 0.48f)
-        val peak = 3
-        val n = heights.size
-        val gap = size.width * 0.05f
-        val barW = (size.width - gap * (n - 1)) / n
-        val maxH = size.height * 0.86f
-        val baseY = size.height
-        val radius = CornerRadius(barW / 2f, barW / 2f)
-        heights.forEachIndexed { i, frac ->
-            val h = maxH * frac
-            val x = i * (barW + gap)
-            drawRoundRect(
-                color = if (i == peak) highlight else base.copy(alpha = 0.35f),
-                topLeft = Offset(x, baseY - h),
-                size = Size(barW, h),
-                cornerRadius = radius,
+        val cx = size.width / 2f
+        val cy = size.height / 2f
+        val center = Offset(cx, cy)
+        val badgeR = size.minDimension * 0.20f
+        val maxR = size.minDimension * 0.52f
+        val stroke = 2.dp.toPx()
+
+        // Expanding call-signal ripples, three phased rings fading as they grow.
+        for (k in 0 until 3) {
+            val p = (wave + k / 3f) % 1f
+            val r = badgeR + (maxR - badgeR) * p
+            drawCircle(
+                color = highlight.copy(alpha = (1f - p) * 0.5f),
+                radius = r,
+                center = center,
+                style = Stroke(width = stroke),
             )
         }
-        // block ring crowning the peak bar
-        val px = peak * (barW + gap) + barW / 2f
-        val py = baseY - maxH - 2.dp.toPx()
-        val rr = barW * 0.55f
-        drawCircle(highlight, rr, Offset(px, py), style = Stroke(width = 2.dp.toPx()))
-        val d = rr * 0.7071f
+
+        // Ban badge: ring + phone glyph + diagonal slash, gently beating.
+        val r = badgeR * beat
+        drawCircle(highlight, r, center, style = Stroke(width = 2.4.dp.toPx()))
+        // simple phone handset glyph inside the badge
+        val pr = r * 0.46f
         drawLine(
-            highlight,
-            Offset(px - d, py - d),
-            Offset(px + d, py + d),
-            strokeWidth = 2.dp.toPx(),
+            color = highlight,
+            start = Offset(cx - pr, cy - pr),
+            end = Offset(cx + pr * 0.2f, cy + pr * 0.6f),
+            strokeWidth = 2.6.dp.toPx(),
+            cap = StrokeCap.Round,
+        )
+        drawLine(
+            color = highlight,
+            start = Offset(cx + pr * 0.2f, cy + pr * 0.6f),
+            end = Offset(cx + pr, cy - pr * 0.2f),
+            strokeWidth = 2.6.dp.toPx(),
+            cap = StrokeCap.Round,
+        )
+        // slash across the badge — the "blocked" mark
+        val d = r * 0.7071f
+        drawLine(
+            color = highlight,
+            start = Offset(cx - d, cy - d),
+            end = Offset(cx + d, cy + d),
+            strokeWidth = 2.4.dp.toPx(),
+            cap = StrokeCap.Round,
         )
     }
 }
 
 /**
- * "Active Rules" abstract viz — a stack of rule rows. Each row is a rounded
- * capsule with a leading status dot; the top (active) row is highlighted, the
- * rest muted. [base] = muted row color, [highlight] = active row color.
+ * "Active Rules" viz — a filter funnel. Call dots fall in from the top, the
+ * funnel screens them, and a lime catch-dot pulses at the throat as each one
+ * passes the active rule. [base] = funnel outline color, [highlight] = the
+ * active-rule accent (falling dots + catch pulse).
  */
 @Composable
 fun ActiveRulesViz(base: Color, highlight: Color, modifier: Modifier = Modifier) {
+    val t = rememberInfiniteTransition(label = "activeRules")
+    val drop by t.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(1500, easing = LinearEasing), RepeatMode.Restart),
+        label = "drop",
+    )
     Canvas(modifier) {
-        val widths = floatArrayOf(1.0f, 0.78f, 0.6f)
-        val activeIdx = 0
-        val n = widths.size
-        val rowH = size.height * 0.20f
-        val gap = (size.height - rowH * n) / (n - 1) * 0.7f
-        val dotR = rowH * 0.42f
-        val dotCx = dotR
-        widths.forEachIndexed { i, frac ->
-            val active = i == activeIdx
-            val color = if (active) highlight else base.copy(alpha = 0.30f)
-            val y = i * (rowH + gap)
-            val cy = y + rowH / 2f
-            // status dot
-            if (active) {
-                drawCircle(color, dotR, Offset(dotCx, cy))
-            } else {
-                drawCircle(color, dotR, Offset(dotCx, cy), style = Stroke(width = 1.5.dp.toPx()))
-            }
-            // rule capsule
-            val barX = dotR * 2f + size.width * 0.05f
-            val barMax = size.width - barX
-            drawRoundRect(
-                color = if (active) color else base.copy(alpha = 0.22f),
-                topLeft = Offset(barX, y),
-                size = Size(barMax * frac, rowH),
-                cornerRadius = CornerRadius(rowH / 2f, rowH / 2f),
+        val w = size.width
+        val h = size.height
+        val stroke = 2.dp.toPx()
+        val outline = base.copy(alpha = 0.45f)
+
+        // Funnel geometry.
+        val topY = h * 0.14f
+        val throatY = h * 0.60f
+        val outLeftX = w * 0.16f
+        val outRightX = w * 0.84f
+        val throatLX = w * 0.43f
+        val throatRX = w * 0.57f
+        val stemBottomY = h * 0.84f
+
+        // Funnel walls + stem.
+        drawLine(outline, Offset(outLeftX, topY), Offset(throatLX, throatY), stroke, cap = StrokeCap.Round)
+        drawLine(outline, Offset(outRightX, topY), Offset(throatRX, throatY), stroke, cap = StrokeCap.Round)
+        drawLine(outline, Offset(throatLX, throatY), Offset(throatLX, stemBottomY), stroke, cap = StrokeCap.Round)
+        drawLine(outline, Offset(throatRX, throatY), Offset(throatRX, stemBottomY), stroke, cap = StrokeCap.Round)
+
+        // Two phased call-dots falling into the funnel mouth.
+        val dotR = w * 0.05f
+        for (k in 0 until 2) {
+            val p = (drop + k * 0.5f) % 1f
+            // funnel converges, so the dot's x drifts toward center as it falls
+            val y = topY + (throatY - topY) * p
+            val converge = 0.5f - (0.5f - 0.34f) * p
+            val x = w * (0.30f + (0.40f) * (k.toFloat())) // start spread
+            val cxDot = x + (w * converge - x) * p
+            drawCircle(
+                color = highlight.copy(alpha = 0.35f + 0.65f * p),
+                radius = dotR,
+                center = Offset(cxDot, y),
             )
         }
+
+        // Lime catch pulse at the throat — fires as a dot completes its fall.
+        val phase = drop % 0.5f / 0.5f
+        val pulse = (1f - phase)
+        drawCircle(
+            color = highlight,
+            radius = dotR * (0.8f + 0.9f * (1f - pulse)),
+            center = Offset(w * 0.5f, throatY + h * 0.06f),
+            alpha = pulse,
+        )
     }
 }
 

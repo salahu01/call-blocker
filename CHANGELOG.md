@@ -66,8 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Block log of screened calls.
 - Dark neon-lime bento UI with a custom icon set.
 
-[Unreleased]: https://github.com/salahu01/call-blocker/compare/v1.0.3...HEAD
-[1.0.3]: https://github.com/salahu01/call-blocker/compare/v1.0.2...v1.0.3
-[1.0.2]: https://github.com/salahu01/call-blocker/compare/v1.0.1...v1.0.2
-[1.0.1]: https://github.com/salahu01/call-blocker/compare/v1.0.0...v1.0.1
-[1.0.0]: https://github.com/salahu01/call-blocker/releases/tag/v1.0.0
+[Unreleased]: https://github.com/salahu01/Globber/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/salahu01/Globber/compare/v1.0.2...v1.0.3
+[1.0.2]: https://github.com/salahu01/Globber/compare/v1.0.1...v1.0.2
+[1.0.1]: https://github.com/salahu01/Globber/compare/v1.0.0...v1.0.1
+[1.0.0]: https://github.com/salahu01/Globber/releases/tag/v1.0.0

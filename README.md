@@ -18,21 +18,21 @@ Wildcards, prefixes, and rules — screened silently by Android before your phon
 
 <br/>
 
-[![CI](https://github.com/salahu01/call-blocker/actions/workflows/ci.yml/badge.svg)](https://github.com/salahu01/call-blocker/actions/workflows/ci.yml)
-[![Issues](https://img.shields.io/github/issues/salahu01/call-blocker?labelColor=0a0c07)](https://github.com/salahu01/call-blocker/issues)
-[![Last commit](https://img.shields.io/github/last-commit/salahu01/call-blocker?labelColor=0a0c07)](https://github.com/salahu01/call-blocker/commits)
-[![License](https://img.shields.io/github/license/salahu01/call-blocker?labelColor=0a0c07)](LICENSE)
-[![Release](https://img.shields.io/github/v/release/salahu01/call-blocker?labelColor=0a0c07)](https://github.com/salahu01/call-blocker/releases/latest)
+[![CI](https://github.com/salahu01/Globber/actions/workflows/ci.yml/badge.svg)](https://github.com/salahu01/Globber/actions/workflows/ci.yml)
+[![Issues](https://img.shields.io/github/issues/salahu01/Globber?labelColor=0a0c07)](https://github.com/salahu01/Globber/issues)
+[![Last commit](https://img.shields.io/github/last-commit/salahu01/Globber?labelColor=0a0c07)](https://github.com/salahu01/Globber/commits)
+[![License](https://img.shields.io/github/license/salahu01/Globber?labelColor=0a0c07)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/salahu01/Globber?labelColor=0a0c07)](https://github.com/salahu01/Globber/releases/latest)
 
 </div>
 
 ## Download
 
-<a href="https://github.com/salahu01/call-blocker/releases/latest">
+<a href="https://github.com/salahu01/Globber/releases/latest">
 <img src="https://img.shields.io/badge/Download%20APK-Latest%20release-C6FF00?style=for-the-badge&logo=android&logoColor=0a0c07&labelColor=0a0c07" alt="Download latest APK" height="44"/>
 </a>
 
-Grab the latest signed APK from the [**Releases**](https://github.com/salahu01/call-blocker/releases/latest) page.
+Grab the latest signed APK from the [**Releases**](https://github.com/salahu01/Globber/releases/latest) page.
 Requires **Android 10 (API 29)** or newer, and Globber set as the device's **call-screening app**.
 
 ## Why
@@ -70,8 +70,8 @@ The name comes from **glob** patterns: you describe the numbers you want gone, a
 1. Install the [Android SDK](https://developer.android.com/studio) and JDK 17.
 2. Clone the repository:
    ```bash
-   git clone https://github.com/salahu01/call-blocker.git
-   cd call-blocker
+   git clone https://github.com/salahu01/Globber.git
+   cd Globber
    ```
 3. Build a debug APK (debug-signed, installable):
    ```bash

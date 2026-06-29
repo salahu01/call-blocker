@@ -2,20 +2,25 @@ package com.salah.callblocker.ui.rules
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
@@ -24,6 +29,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
@@ -40,13 +46,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -78,6 +87,17 @@ fun RuleAction.displayName(): String = when (this) {
     RuleAction.VOICEMAIL -> "Voicemail"
 }
 
+private enum class RuleFilter(val label: String) {
+    ALL("All"), ACTIVE("Active"), DISABLED("Off"),
+}
+
+private enum class RuleSort(val label: String) {
+    MANUAL("Manual order"),
+    NEWEST("Newest first"),
+    AZ("A – Z"),
+    TYPE("Match type"),
+}
+
 @Composable
 fun RulesScreen(
     modifier: Modifier = Modifier,
@@ -88,6 +108,40 @@ fun RulesScreen(
     val accents = LocalCallBlockerColors.current
     // null = no dialog; non-null wrapper holds the rule being edited (or null inside = add)
     var editorState by remember { mutableStateOf<EditorState?>(null) }
+
+    var query by remember { mutableStateOf("") }
+    var filter by remember { mutableStateOf(RuleFilter.ALL) }
+    var sort by remember { mutableStateOf(RuleSort.MANUAL) }
+
+    val visible = remember(rules, query, filter, sort) {
+        val q = query.trim()
+        rules.asSequence()
+            .filter {
+                when (filter) {
+                    RuleFilter.ALL -> true
+                    RuleFilter.ACTIVE -> it.enabled
+                    RuleFilter.DISABLED -> !it.enabled
+                }
+            }
+            .filter {
+                q.isBlank() ||
+                    it.pattern.contains(q, ignoreCase = true) ||
+                    it.label.contains(q, ignoreCase = true)
+            }
+            .sortedWith(
+                when (sort) {
+                    RuleSort.MANUAL -> compareBy { it.position }
+                    RuleSort.NEWEST -> compareByDescending { it.createdAt }
+                    RuleSort.AZ -> compareBy(String.CASE_INSENSITIVE_ORDER) {
+                        it.label.ifBlank { it.pattern }
+                    }
+                    RuleSort.TYPE -> compareBy({ it.type.ordinal }, { it.position })
+                },
+            )
+            .toList()
+    }
+    // manual reorder only makes sense in the unfiltered, manually-sorted view
+    val showReorder = query.isBlank() && filter == RuleFilter.ALL && sort == RuleSort.MANUAL
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -112,25 +166,46 @@ fun RulesScreen(
                 modifier = Modifier.padding(innerPadding),
             )
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = innerPadding.calculateTopPadding() + 8.dp,
-                    bottom = innerPadding.calculateBottomPadding() + 88.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = innerPadding.calculateTopPadding()),
             ) {
-                items(rules, key = { it.id }) { rule ->
-                    RuleRow(
-                        rule = rule,
-                        onToggle = { viewModel.toggle(rule) },
-                        onDelete = { viewModel.delete(rule) },
-                        onMoveUp = { viewModel.moveUp(rule) },
-                        onMoveDown = { viewModel.moveDown(rule) },
-                        onClick = { editorState = EditorState(rule) },
-                    )
+                RulesToolbar(
+                    query = query,
+                    onQuery = { query = it },
+                    filter = filter,
+                    onFilter = { filter = it },
+                    sort = sort,
+                    onSort = { sort = it },
+                    total = rules.size,
+                    shown = visible.size,
+                )
+                if (visible.isEmpty()) {
+                    NoMatch(onClear = { query = ""; filter = RuleFilter.ALL })
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 4.dp,
+                            bottom = innerPadding.calculateBottomPadding() + 88.dp,
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        items(visible, key = { it.id }) { rule ->
+                            RuleRow(
+                                rule = rule,
+                                showReorder = showReorder,
+                                onToggle = { viewModel.toggle(rule) },
+                                onDelete = { viewModel.delete(rule) },
+                                onMoveUp = { viewModel.moveUp(rule) },
+                                onMoveDown = { viewModel.moveDown(rule) },
+                                onClick = { editorState = EditorState(rule) },
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -161,6 +236,171 @@ fun RulesScreen(
 }
 
 private class EditorState(val rule: BlockRule?)
+
+@Composable
+private fun RulesToolbar(
+    query: String,
+    onQuery: (String) -> Unit,
+    filter: RuleFilter,
+    onFilter: (RuleFilter) -> Unit,
+    sort: RuleSort,
+    onSort: (RuleSort) -> Unit,
+    total: Int,
+    shown: Int,
+) {
+    val accents = LocalCallBlockerColors.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = onQuery,
+            singleLine = true,
+            placeholder = { Text("Search number or label") },
+            leadingIcon = {
+                Icon(AppIcons.search, contentDescription = null, modifier = Modifier.size(20.dp))
+            },
+            trailingIcon = {
+                if (query.isNotEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .clickable { onQuery("") },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(AppIcons.plus, contentDescription = "Clear", modifier = Modifier
+                            .size(16.dp)
+                            .rotate(45f))
+                    }
+                }
+            },
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                RuleFilter.entries.forEach { f ->
+                    FilterChipPill(
+                        text = f.label,
+                        selected = f == filter,
+                        onClick = { onFilter(f) },
+                    )
+                }
+            }
+            Spacer(Modifier.width(8.dp))
+            SortControl(sort = sort, onSort = onSort)
+        }
+
+        Text(
+            text = if (shown == total) "$total rule${if (total == 1) "" else "s"}"
+            else "$shown of $total",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun FilterChipPill(text: String, selected: Boolean, onClick: () -> Unit) {
+    val accents = LocalCallBlockerColors.current
+    val bg = if (selected) accents.accentFill else MaterialTheme.colorScheme.surfaceContainerHighest
+    val fg = if (selected) accents.onAccent else MaterialTheme.colorScheme.onSurface
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(bg)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        Text(text = text, style = MaterialTheme.typography.labelMedium, color = fg)
+    }
+}
+
+@Composable
+private fun SortControl(sort: RuleSort, onSort: (RuleSort) -> Unit) {
+    val accents = LocalCallBlockerColors.current
+    var open by remember { mutableStateOf(false) }
+    Box {
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                .clickable { open = true }
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                AppIcons.sort,
+                contentDescription = "Sort",
+                tint = accents.accentFill,
+                modifier = Modifier.size(16.dp),
+            )
+            Text(
+                text = sort.label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(start = 6.dp),
+            )
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            RuleSort.entries.forEach { s ->
+                DropdownMenuItem(
+                    text = { Text(s.label) },
+                    trailingIcon = {
+                        if (s == sort) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(accents.accentFill),
+                            )
+                        }
+                    },
+                    onClick = { onSort(s); open = false },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NoMatch(onClear: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "No rules match",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = "Try a different search or filter.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+            )
+            PillButton(text = "Clear filters", onClick = onClear, filled = false)
+        }
+    }
+}
 
 @Composable
 private fun EmptyRules(onAdd: () -> Unit, modifier: Modifier = Modifier) {
@@ -261,31 +501,56 @@ private fun EmptyRulesArt(modifier: Modifier = Modifier) {
     }
 }
 
+/** Small outlined chip: pattern-type icon + label. */
 @Composable
-private fun TagPill(text: String, leadingIcon: androidx.compose.ui.graphics.vector.ImageVector? = null) {
-    val accents = LocalCallBlockerColors.current
+private fun TypePill(type: PatternType) {
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(50))
-            .border(1.dp, accents.accentFill, RoundedCornerShape(50))
-            .background(accents.accentFill.copy(alpha = 0.10f))
-            .padding(horizontal = 12.dp, vertical = 5.dp),
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (leadingIcon != null) {
-            Icon(
-                imageVector = leadingIcon,
-                contentDescription = null,
-                tint = accents.accentFill,
-                modifier = Modifier
-                    .padding(end = 6.dp)
-                    .size(16.dp),
-            )
-        }
+        Icon(
+            imageVector = type.icon(),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier
+                .padding(end = 5.dp)
+                .size(15.dp),
+        )
         Text(
-            text = text,
-            style = MaterialTheme.typography.labelLarge,
+            text = type.displayName(),
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
+@Composable
+private fun actionColor(action: RuleAction): Color {
+    val accents = LocalCallBlockerColors.current
+    return when (action) {
+        RuleAction.REJECT -> MaterialTheme.colorScheme.error
+        RuleAction.SILENCE -> MaterialTheme.colorScheme.onSurfaceVariant
+        RuleAction.VOICEMAIL -> accents.accentFill
+    }
+}
+
+/** Filled, color-coded action chip. */
+@Composable
+private fun ActionPill(action: RuleAction) {
+    val color = actionColor(action)
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(color.copy(alpha = 0.14f))
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+    ) {
+        Text(
+            text = action.displayName(),
+            style = MaterialTheme.typography.labelMedium,
+            color = color,
         )
     }
 }
@@ -293,6 +558,7 @@ private fun TagPill(text: String, leadingIcon: androidx.compose.ui.graphics.vect
 @Composable
 private fun RuleRow(
     rule: BlockRule,
+    showReorder: Boolean,
     onToggle: () -> Unit,
     onDelete: () -> Unit,
     onMoveUp: () -> Unit,
@@ -300,36 +566,68 @@ private fun RuleRow(
     onClick: () -> Unit,
 ) {
     val accents = LocalCallBlockerColors.current
+    val enabled = rule.enabled
     BentoCard(
         variant = BentoVariant.Dark,
         modifier = Modifier.fillMaxWidth(),
         onClick = onClick,
         contentPadding = 16,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = rule.label.ifBlank { rule.pattern },
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = rule.pattern,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontFamily = FontFamily.Monospace,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 8.dp),
-                )
-                TagPill(
-                    text = "${rule.type.displayName()} · ${rule.action.displayName()}",
-                    leadingIcon = rule.type.icon(),
+        Row(modifier = Modifier.fillMaxWidth()) {
+            // leading type badge
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(accents.accentFill.copy(alpha = if (enabled) 0.16f else 0.07f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = rule.type.icon(),
+                    contentDescription = null,
+                    tint = if (enabled) accents.accentFill
+                    else accents.accentFill.copy(alpha = 0.4f),
+                    modifier = Modifier.size(24.dp),
                 )
             }
+
+            Spacer(Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = rule.label.ifBlank { rule.pattern },
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                            .copy(alpha = if (enabled) 1f else 0.5f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    StatusDot(enabled)
+                }
+                if (rule.label.isNotBlank()) {
+                    Text(
+                        text = rule.pattern,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 1.dp),
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    TypePill(rule.type)
+                    ActionPill(rule.action)
+                }
+            }
+
+            Spacer(Modifier.width(8.dp))
             Switch(
-                checked = rule.enabled,
+                checked = enabled,
                 onCheckedChange = { onToggle() },
                 colors = SwitchDefaults.colors(
                     checkedTrackColor = accents.accentFill,
@@ -337,24 +635,35 @@ private fun RuleRow(
                 ),
             )
         }
+
+        Spacer(Modifier.height(12.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f))
+        Spacer(Modifier.height(10.dp))
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp),
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            CircleIconButton(
-                icon = AppIcons.chevronUp,
-                contentDescription = "Move up",
-                onClick = onMoveUp,
-                outlined = true,
-            )
-            CircleIconButton(
-                icon = AppIcons.chevronDown,
-                contentDescription = "Move down",
-                onClick = onMoveDown,
-                outlined = true,
-            )
+            if (showReorder) {
+                CircleIconButton(
+                    icon = AppIcons.chevronUp,
+                    contentDescription = "Move up",
+                    onClick = onMoveUp,
+                    outlined = true,
+                )
+                CircleIconButton(
+                    icon = AppIcons.chevronDown,
+                    contentDescription = "Move down",
+                    onClick = onMoveDown,
+                    outlined = true,
+                )
+            } else {
+                Text(
+                    text = "Tap to edit",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Box(modifier = Modifier.weight(1f))
             CircleIconButton(
                 icon = AppIcons.trash,
@@ -364,6 +673,26 @@ private fun RuleRow(
                 tint = MaterialTheme.colorScheme.error,
             )
         }
+    }
+}
+
+@Composable
+private fun StatusDot(enabled: Boolean) {
+    val accents = LocalCallBlockerColors.current
+    val color = if (enabled) accents.accentFill else MaterialTheme.colorScheme.onSurfaceVariant
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(7.dp)
+                .clip(CircleShape)
+                .background(color),
+        )
+        Text(
+            text = if (enabled) "On" else "Off",
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            modifier = Modifier.padding(start = 4.dp),
+        )
     }
 }
 

@@ -78,6 +78,24 @@ object AppIcons {
         }
     }
 
+    val search: ImageVector by lazy {
+        lineIcon("AppSearch") {
+            circle(11f, 11f, 6f)
+            moveTo(15.5f, 15.5f); lineTo(20f, 20f)
+        }
+    }
+
+    val sort: ImageVector by lazy {
+        lineIcon("AppSort") {
+            moveTo(5f, 7.5f); lineTo(16f, 7.5f)
+            moveTo(5f, 12f); lineTo(12.5f, 12f)
+            moveTo(5f, 16.5f); lineTo(9f, 16.5f)
+            // descending arrow on the right
+            moveTo(17.5f, 9f); lineTo(17.5f, 17f)
+            moveTo(15f, 14.5f); lineTo(17.5f, 17f); lineTo(20f, 14.5f)
+        }
+    }
+
     val arrowLeft: ImageVector by lazy {
         lineIcon("AppArrowLeft") {
             moveTo(20f, 12f); lineTo(4f, 12f)

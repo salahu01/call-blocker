@@ -705,7 +705,7 @@ private fun RuleEditorDialog(
 ) {
     var pattern by remember { mutableStateOf(initial?.pattern ?: "") }
     var label by remember { mutableStateOf(initial?.label ?: "") }
-    var type by remember { mutableStateOf(initial?.type ?: PatternType.EXACT) }
+    var type by remember { mutableStateOf(initial?.type ?: PatternType.STARTS_WITH) }
     var action by remember { mutableStateOf(initial?.action ?: RuleAction.REJECT) }
     var typeExpanded by remember { mutableStateOf(false) }
     var actionExpanded by remember { mutableStateOf(false) }
